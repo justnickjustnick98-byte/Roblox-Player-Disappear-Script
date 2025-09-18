@@ -1,0 +1,98 @@
+--[[
+	Roblox Player Disappear Script
+
+	This is a client-sided script that will make all players on the screen,
+	and all future players who join, invisible to the local client when the 'E' key is pressed.
+	It uses LocalTransparencyModifier to achieve this effect, which only affects your screen.
+
+	How to use:
+	Place this LocalScript inside StarterPlayer > StarterPlayerScripts.
+]]
+
+-- Services
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+
+-- The local player
+local localPlayer = Players.LocalPlayer
+
+-- A variable to track if the players are currently invisible
+local isHidden = false
+
+-- Function to make a player's character invisible by making all its parts transparent
+local function makeCharacterInvisible(character)
+	-- Loop through every part of the character's model
+	for _, part in ipairs(character:GetDescendants()) do
+		-- Check if the descendant is a BasePart (a physical part)
+		if part:IsA("BasePart") then
+			-- Set LocalTransparencyModifier to 1 to make it fully transparent on this client
+			part.LocalTransparencyModifier = 1
+		-- Also check for BillboardGuis, which are commonly used for chat bubbles
+		elseif part:IsA("BillboardGui") then
+			-- Disable the BillboardGui to hide it completely
+			part.Enabled = false
+		end
+	end
+	print("Character made invisible:", character.Name)
+end
+
+-- Function to make a player's character visible again
+local function makeCharacterVisible(character)
+	-- Loop through every part of the character's model
+	for _, part in ipairs(character:GetDescendants()) do
+		-- Check if the descendant is a BasePart (a physical part)
+		if part:IsA("BasePart") then
+			-- Set LocalTransparencyModifier back to 0 to make it opaque again
+			part.LocalTransparencyModifier = 0
+		-- Also check for BillboardGuis, which are commonly used for chat bubbles
+		elseif part:IsA("BillboardGui") then
+			-- Enable the BillboardGui to make it visible again
+			part.Enabled = true
+		end
+	end
+	print("Character made visible:", character.Name)
+end
+
+-- Function to apply the invisibility effect to all current players
+local function setPlayersVisibility(visible)
+	local action = visible and makeCharacterVisible or makeCharacterInvisible
+	for _, player in ipairs(Players:GetPlayers()) do
+		-- Exclude the local player from the effect
+		if player ~= localPlayer then
+			if player.Character then
+				action(player.Character)
+			end
+			-- Set up a listener for when the character is added (respawns)
+			-- The listener will apply the current visibility setting
+			player.CharacterAdded:Connect(action)
+		end
+	end
+end
+
+-- Listen for key presses
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+	-- Check if the 'E' key was pressed and it's not part of a UI interaction
+	if input.KeyCode == Enum.KeyCode.E and not gameProcessedEvent then
+		if not isHidden then
+			-- If players are not hidden, hide them
+			setPlayersVisibility(false)
+			isHidden = true
+			print("All other players are now hidden.")
+		else
+			-- If players are hidden, make them reappear
+			setPlayersVisibility(true)
+			isHidden = false
+			print("All other players are now visible.")
+		end
+	end
+end)
+
+-- Listen for new players joining the game
+Players.PlayerAdded:Connect(function(newPlayer)
+	-- Only make the new player invisible if the toggle is currently on
+	if isHidden then
+		newPlayer.CharacterAdded:Connect(makeCharacterInvisible)
+	end
+end)
+
+print("Player Disappear Script loaded. Press 'E' to toggle player visibility.")
