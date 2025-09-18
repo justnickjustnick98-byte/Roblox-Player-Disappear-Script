@@ -1,0 +1,1 @@
+I don't have too much to explain. This is a hide player script that makes other players on your screen semi-invisible, but somewhat completely. It's only good for "Ascending" servers or servers that don't have many players, and it's perfect for creating a liminal vibe. To use it, just press E.
